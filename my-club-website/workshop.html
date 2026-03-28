@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Workshops | AI-Med Club</title>
+    <style>
+        /* CSS หลัก (เหมือนหน้าแรก) */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        body { background-color: #f5f5f7; color: #1d1d1f; line-height: 1.6; scroll-behavior: smooth; overflow-x: hidden; }
+        body.th-active .en { display: none !important; }
+        body.en-active .th { display: none !important; }
+        
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        /* Navbar */
+        nav { position: fixed; top: 0; width: 100%; height: 55px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); z-index: 1000; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        nav a { color: #1d1d1f; text-decoration: none; font-size: 14px; margin: 0 15px; font-weight: 500; transition: 0.2s; }
+        nav a:hover { color: #0071e3; }
+        .lang-btn { margin-left: 20px; padding: 6px 16px; border-radius: 20px; background: #1d1d1f; color: #fff; border: none; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.3s; }
+        .lang-btn:hover { background: #0071e3; transform: scale(1.1); }
+
+        /* Header กิจกรรม */
+        .page-header { background: radial-gradient(circle at center, #fff 0%, #eef6ff 100%); padding: 120px 20px 60px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .icon { font-size: 70px; margin-bottom: 20px; display: inline-block; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .page-header h1 { font-size: 42px; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; color: #1d1d1f;}
+
+        /* เนื้อหา */
+        .container { max-width: 800px; margin: -30px auto 60px; background: #fff; padding: 50px; border-radius: 24px; box-shadow: 0 15px 40px rgba(0,0,0,0.04); position: relative; z-index: 10; }
+        .back-link { display: inline-flex; align-items: center; margin-bottom: 30px; text-decoration: none; color: #0071e3; font-weight: 600; font-size: 15px; transition: 0.2s; padding: 8px 16px; background: #f0f7ff; border-radius: 20px;}
+        .back-link:hover { background: #e0efff; transform: translateX(-5px); }
+        
+        h2 { font-size: 24px; color: #1d1d1f; margin: 40px 0 15px; border-left: 4px solid #0071e3; padding-left: 15px; }
+        p, li { font-size: 17px; color: #555; line-height: 1.8; margin-bottom: 15px; }
+        ul { margin-left: 35px; margin-bottom: 25px; }
+        li { padding-left: 5px; }
+
+        .photo-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 40px; }
+        .photo-box { background: #f0f0f0; border-radius: 16px; height: 250px; display: flex; justify-content: center; align-items: center; color: #86868b; overflow: hidden; border: 1px solid rgba(0,0,0,0.05);}
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+        
+        footer { padding: 40px; text-align: center; background: #fafafa; color: #86868b; font-size: 13px; border-top: 1px solid rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body class="th-active">
+
+    <nav>
+        <a href="index.html" class="th">← กลับหน้าแรก</a>
+        <a href="index.html" class="en">← Back to Home</a>
+        <button id="langToggleBtn" class="lang-btn" onclick="toggleLanguage()">EN</button>
+    </nav>
+
+    <div class="page-header">
+        <div class="icon reveal">💻</div>
+        <h1 class="th reveal">AI Workshops</h1>
+        <h1 class="en reveal">AI Workshops</h1>
+        <p class="th reveal" style="color: #86868b; font-size: 18px;">เรียนรู้และปฏิบัติจริง (Hands-on Experience)</p>
+        <p class="en reveal" style="color: #86868b; font-size: 18px;">Learn and Practice (Hands-on Experience)</p>
+    </div>
+
+    <div class="container reveal">
+        <a href="index.html" class="back-link th">← กลับไปหน้าหลัก</a>
+        <a href="index.html" class="back-link en">← Back to Main Page</a>
+
+        <div class="th">
+            <p>กิจกรรมเวิร์กชอปของชมรม AI-Med มุ่งเน้นให้นักศึกษาได้เรียนรู้และลงมือทำจริงในการนำเทคโนโลยีปัญญาประดิษฐ์ (AI) มาประยุกต์ใช้ในวงการการแพทย์ ไม่จำเป็นต้องมีพื้นฐานการเขียนโปรแกรมก็สามารถเข้าร่วมได้</p>
+            
+            <h2>เนื้อหาที่สอนใน Workshop</h2>
+            <ul>
+                <li><strong>Introduction to AI in Healthcare:</strong> ปูพื้นฐานความเข้าใจ AI และ Machine Learning เบื้องต้น</li>
+                <li><strong>Medical Image Analysis:</strong> การใช้ Computer Vision วิเคราะห์ภาพถ่าย X-Ray, MRI หรือ CT Scan</li>
+                <li><strong>Predictive Models:</strong> การสร้างโมเดลทำนายความเสี่ยงของโรคจากประวัติผู้ป่วย</li>
+            </ul>
+
+            <h2>เหมาะสำหรับใคร?</h2>
+            <p>นักศึกษาทุกชั้นปีและทุกคณะที่มีความสนใจด้าน Health-Tech โดยเฉพาะสายวิทยาศาสตร์สุขภาพและเทคโนโลยี</p>
+        </div>
+
+        <div class="en">
+            <p>Our AI-Med workshops focus on hands-on learning, allowing students to apply Artificial Intelligence (AI) technologies in the medical field. No prior programming experience is required!</p>
+            
+            <h2>Workshop Topics</h2>
+            <ul>
+                <li><strong>Introduction to AI in Healthcare:</strong> Basics of AI and Machine Learning.</li>
+                <li><strong>Medical Image Analysis:</strong> Using Computer Vision to analyze X-Rays, MRIs, and CT Scans.</li>
+                <li><strong>Predictive Models:</strong> Building models to predict disease risks from patient data.</li>
+            </ul>
+
+            <h2>Who should join?</h2>
+            <p>Students from all years and faculties interested in Health-Tech, especially those in health sciences and technology.</p>
+        </div>
+
+        <div class="photo-gallery">
+            <div class="photo-box">[ ใส่รูปภาพที่ 1 ]</div>
+            <div class="photo-box">[ ใส่รูปภาพที่ 2 ]</div>
+        </div>
+    </div>
+
+    <footer><p>&copy; 2026 AI-Med Club RSU. All rights reserved.</p></footer>
+
+    <script>
+        let currentLang = 'th';
+        function toggleLanguage() {
+            let body = document.body; let btn = document.getElementById('langToggleBtn');
+            if (currentLang === 'th') { body.classList.remove('th-active'); body.classList.add('en-active'); btn.innerText = 'TH'; currentLang = 'en'; }
+            else { body.classList.remove('en-active'); body.classList.add('th-active'); btn.innerText = 'EN'; currentLang = 'th'; }
+        }
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight; var elementTop = reveals[i].getBoundingClientRect().top; var elementVisible = 50;
+                if (elementTop < windowHeight - elementVisible) reveals[i].classList.add("active");
+            }
+        }
+        window.addEventListener("scroll", reveal); reveal();
+    </script>
+</body>
+</html>

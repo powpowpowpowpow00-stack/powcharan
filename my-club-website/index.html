@@ -1,0 +1,426 @@
+from flask import Flask, render_template_string
+
+app = Flask(__name__)
+
+# โค้ด HTML/CSS/JS ทั้งหมดจะถูกเก็บไว้ในตัวแปรนี้
+html_code = """
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Med Club | RSU</title>
+    <style>
+        /* ================= 1. Reset & Global ================= */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #ffffff; color: #1d1d1f; line-height: 1.6; scroll-behavior: smooth; overflow-x: hidden; }
+        
+        /* สลับภาษา */
+        body.th-active .en { display: none !important; }
+        body.en-active .th { display: none !important; }
+
+        /* ================= 2. Animations ================= */
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
+        .reveal { opacity: 0; transform: translateY(50px); transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .delay-1 { transition-delay: 0.1s; } .delay-2 { transition-delay: 0.2s; } 
+        .delay-3 { transition-delay: 0.3s; } .delay-4 { transition-delay: 0.4s; }
+
+        /* ================= 3. Navigation ================= */
+        nav {
+            position: fixed; top: 0; width: 100%; height: 55px;
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px);
+            z-index: 1000; display: flex; justify-content: center; align-items: center;
+            border-bottom: 1px solid rgba(0,0,0,0.05); flex-wrap: wrap; transition: 0.3s;
+        }
+        nav a { color: #1d1d1f; text-decoration: none; font-size: 13px; margin: 0 12px; opacity: 0.8; font-weight: 500; transition: 0.2s;}
+        nav a:hover { opacity: 1; color: #0071e3; transform: translateY(-2px); }
+        .lang-btn { margin-left: 20px; padding: 6px 16px; border-radius: 20px; background: #1d1d1f; color: #fff; border: none; cursor: pointer; font-weight: 600; font-size: 12px; transition: all 0.3s ease; }
+        .lang-btn:hover { background: #0071e3; transform: scale(1.1); box-shadow: 0 5px 15px rgba(0, 113, 227, 0.4); }
+
+        /* ================= 4. Hero & Sections ================= */
+        .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: radial-gradient(circle at center, #fff 0%, #eef6ff 100%); }
+        .hero h1 { font-size: clamp(50px, 8vw, 80px); font-weight: 800; letter-spacing: -1px; background: linear-gradient(90deg, #0071e3, #00d4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: float 4s ease-in-out infinite; }
+        .hero p { font-size: 24px; color: #86868b; margin-top: 10px; font-weight: 400;}
+
+        .section { padding: 90px 20px 50px; max-width: 1200px; margin: 0 auto; text-align: center; }
+        .section-title { font-size: 38px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.5px;}
+        .section-subtitle { color: #86868b; margin-bottom: 50px; font-size: 18px; }
+
+        /* About */
+        .about-box { background: #fcfcfc; border-radius: 24px; padding: 50px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.02); max-width: 800px; margin: 0 auto; transition: 0.3s; text-align: left; }
+        .about-box:hover { box-shadow: 0 20px 40px rgba(0,113,227,0.08); transform: translateY(-5px); }
+        .about-text { font-size: 16px; color: #555; line-height: 1.6;}
+        .highlight { color: #0071e3; font-weight: 600; }
+        
+        .about-list { list-style: none; padding: 0; margin-top: 20px; }
+        .about-list li { margin-bottom: 20px; display: flex; align-items: flex-start; }
+        .about-icon { font-size: 28px; margin-right: 15px; line-height: 1; }
+        .about-title { font-size: 18px; color: #1d1d1f; display: block; margin-bottom: 5px; }
+
+        /* Activities */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
+        a.activity-card { text-decoration: none; display: block; color: inherit; }
+        .activity-card { background: #fff; padding: 30px; border-radius: 20px; text-align: left; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 5px 15px rgba(0,0,0,0.02); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer;}
+        .activity-card:hover { transform: translateY(-10px) scale(1.02); box-shadow: 0 20px 30px rgba(0,113,227,0.1); border-color: rgba(0,113,227,0.2); }
+        .activity-icon { font-size: 40px; margin-bottom: 15px; transition: 0.3s; display: inline-block; }
+        .activity-card:hover .activity-icon { transform: scale(1.2) rotate(10deg); }
+        .activity-card h3 { font-size: 20px; margin-bottom: 10px; color: #1d1d1f; line-height: 1.4;}
+        .activity-card p { font-size: 15px; color: #555;}
+
+        /* Calendar */
+        .calendar-container { max-width: 800px; margin: 0 auto; text-align: left; }
+        .event-item { display: flex; align-items: center; background: #fff; padding: 20px; border-radius: 16px; margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 5px 15px rgba(0,0,0,0.02); transition: 0.3s;}
+        .event-item:hover { transform: translateX(10px); border-left: 5px solid #0071e3; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .event-date { background: #f0f7ff; color: #0071e3; min-width: 80px; height: 80px; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; margin-right: 20px; transition: 0.3s; }
+        .event-item:hover .event-date { background: #0071e3; color: #fff; }
+        .event-day { font-size: 28px; font-weight: 700; line-height: 1; }
+        .event-month { font-size: 14px; font-weight: 600; text-transform: uppercase; }
+
+        /* Team */
+        .card { padding: 30px 20px; border-radius: 30px; background: #f5f5f7; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; border: 1px solid transparent;}
+        .card:hover { transform: translateY(-10px); background: #fff; box-shadow: 0 20px 40px rgba(0,0,0,0.08); border: 1px solid rgba(0,113,227,0.15);}
+        .profile-box { width: 140px; height: 140px; margin: 0 auto 15px; border-radius: 50%; overflow: hidden; border: 5px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.08); background-color: #eee; transition: 0.4s; }
+        .card:hover .profile-box { transform: scale(1.05); border-color: #f0f7ff; }
+        .profile-box img { width: 100%; height: 100%; object-fit: cover; display: block;}
+        .role { font-size: 13px; font-weight: 700; color: #0071e3; text-transform: uppercase; margin-bottom: 5px; display: block; letter-spacing: 1px;}
+        .name { font-size: 18px; font-weight: 600; line-height: 1.3;}
+
+        /* Gallery */
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .ig-post { border-radius: 20px; overflow: hidden; background: #fafafa; box-shadow: 0 10px 20px rgba(0,0,0,0.03); transition: 0.4s; border: 1px solid rgba(0,0,0,0.05); text-decoration: none; color: inherit; display: block; }
+        .ig-post:hover { transform: scale(1.03) translateY(-5px); box-shadow: 0 20px 35px rgba(0,0,0,0.12); border-color: #dc2743; }
+        
+        .ig-img { width: 100%; aspect-ratio: 1 / 1; background: #f0f0f0; display: flex; justify-content: center; align-items: center; color: #86868b; overflow: hidden;}
+        .ig-img img { width: 100%; height: 100%; object-fit: cover; display: block;}
+
+        .ig-btn { display: inline-block; margin-top: 30px; padding: 14px 35px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: white; text-decoration: none; border-radius: 50px; font-weight: 600; transition: all 0.3s; box-shadow: 0 10px 20px rgba(220, 39, 67, 0.2); font-size: 16px;}
+        .ig-btn:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 15px 30px rgba(220, 39, 67, 0.4); }
+
+        /* ================= 5. Modal Pop-up ================= */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(10px); justify-content: center; align-items: center; }
+        .modal-content { background: #fff; padding: 40px; border-radius: 24px; max-width: 480px; width: 90%; text-align: center; position: relative; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { 0% { transform: scale(0.7) translateY(50px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: #86868b; transition: 0.2s; width: 35px; height: 35px; border-radius: 50%; display: flex; justify-content: center; align-items: center;}
+        .close-btn:hover { background: #ffeeef; color: #dc2743; transform: rotate(90deg); }
+        .modal-img { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 4px solid #f0f7ff; box-shadow: 0 10px 20px rgba(0,0,0,0.1);}
+        
+        .modal-desc-box { margin-top: 20px; font-size: 15px; color: #333; text-align: left; background: #f5f5f7; padding: 25px; border-radius: 16px; line-height: 1.6; }
+        .modal-pos { font-size: 18px; font-weight: 700; color: #1d1d1f; display: block; margin-bottom: 8px; }
+        .modal-edu { font-size: 15px; color: #555; display: block; margin-bottom: 15px; }
+        .modal-contact { border-top: 1px solid #ddd; padding-top: 12px; font-size: 14px; color: #888; display: block; }
+
+        footer { padding: 40px; text-align: center; background: #fafafa; color: #86868b; font-size: 13px; border-top: 1px solid rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body class="th-active">
+
+    <nav>
+        <a href="#" class="th">หน้าแรก</a>
+        <a href="#about" class="th">เกี่ยวกับ</a>
+        <a href="#core-activities" class="th">กิจกรรม</a>
+        <a href="#calendar" class="th">ปฏิทิน</a>
+        <a href="#team" class="th">ทีมบริหาร</a>
+        <a href="#gallery" class="th">ผลงาน</a>
+        
+        <a href="#" class="en">Home</a>
+        <a href="#about" class="en">About</a>
+        <a href="#core-activities" class="en">Activities</a>
+        <a href="#calendar" class="en">Calendar</a>
+        <a href="#team" class="en">Team</a>
+        <a href="#gallery" class="en">Gallery</a>
+
+        <button id="langToggleBtn" class="lang-btn" onclick="toggleLanguage()">EN</button>
+    </nav>
+
+    <div class="hero">
+        <h1 class="reveal">AI-Med Club</h1>
+        <p class="th reveal delay-1">ปัญญาประดิษฐ์ทางการแพทย์ @RSU</p>
+        <p class="en reveal delay-1">Intelligence Meets Healthcare @RSU</p>
+    </div>
+
+    <section class="section" id="about">
+        <h2 class="section-title reveal">About Us</h2>
+        <div class="about-box reveal delay-1">
+            <p class="th about-text" style="text-align: center; font-size: 20px; margin-bottom: 30px;">
+                <span class="highlight">AI-Medical Club RSU</span> ไม่ใช่แค่ชมรม... แต่คือจุดเริ่มต้นของนวัตกรทางการแพทย์!
+            </p>
+            <p class="en about-text" style="text-align: center; font-size: 20px; margin-bottom: 30px;">
+                <span class="highlight">AI-Medical Club RSU</span> is not just a club... It's the birthplace of medical innovators!
+            </p>
+
+            <ul class="about-list">
+                <li>
+                    <span class="about-icon">🚀</span>
+                    <div>
+                        <strong class="th about-title">จากทฤษฎี สู่นวัตกรรมจริง</strong>
+                        <strong class="en about-title">From Theory to Real Innovation</strong>
+                        <span class="th about-text">เปลี่ยนความรู้ในห้องเรียนให้กลายเป็น "นวัตกรรม" ที่จับต้องได้ ผ่านการเขียนโปรแกรมและการพัฒนาเทคโนโลยีทางการแพทย์</span>
+                        <span class="en about-text">Transform classroom knowledge into tangible innovations through programming and developing medical technologies.</span>
+                    </div>
+                </li>
+                
+                <li>
+                    <span class="about-icon">🤝</span>
+                    <div>
+                        <strong class="th about-title">พื้นที่ปล่อยของ & ปั้น Connection</strong>
+                        <strong class="en about-title">Idea Hub & Connection</strong>
+                        <span class="th about-text">คอมมูนิตี้สำหรับแลกเปลี่ยนไอเดียสุดเจ๋ง พร้อมสร้างเครือข่ายสุดแกร่งกับเพื่อนๆ ทั้งในและต่างคณะที่หลงใหลในสิ่งเดียวกัน</span>
+                        <span class="en about-text">A dynamic community to pitch ideas and build strong networking with peers across faculties who share the same passion.</span>
+                    </div>
+                </li>
+
+                <li>
+                    <span class="about-icon">🧠</span>
+                    <div>
+                        <strong class="th about-title">บุกเบิกการแพทย์ยุคใหม่ด้วย AI</strong>
+                        <strong class="en about-title">Pioneering Next-Gen Healthcare</strong>
+                        <span class="th about-text">ลงมือทำจริง! เรียนรู้และฝึกฝนการประยุกต์ใช้ AI เพื่อเป็นกำลังสำคัญในการยกระดับวงการแพทย์ในอนาคต</span>
+                        <span class="en about-text">Get hands-on experience! Master AI applications to become a driving force in elevating the future of the medical industry.</span>
+                    </div>
+                </li>
+
+                <li>
+                    <span class="about-icon">🏆</span>
+                    <div>
+                        <strong class="th about-title">ผลักดันไอเดีย สู่เวทีระดับประเทศ</strong>
+                        <strong class="en about-title">Pushing Ideas to the National Stage</strong>
+                        <span class="th about-text">เตรียมความพร้อม ฟอร์มทีม และลุยงานประกวด Hackathon เพื่อพิสูจน์ฝีมือ สร้างโปรไฟล์ และคว้าเงินรางวัล</span>
+                        <span class="en about-text">Prepare, form teams, and join national Hackathons to prove your skills, build your portfolio, and win prizes.</span>
+                    </div>
+                </li>
+
+                <li>
+                    <span class="about-icon">🌍</span>
+                    <div>
+                        <strong class="th about-title">อัปสกิล สู่สายงานแห่งอนาคต</strong>
+                        <strong class="en about-title">Upskill for the Future</strong>
+                        <span class="th about-text">ปูทางพร้อมก้าวสู่สายงาน Medical AI Engineer ซึ่งเป็นทักษะที่กำลังเป็นที่ต้องการสูงมากในระดับโลกแบบไร้รอยต่อ</span>
+                        <span class="en about-text">Seamlessly pave your way to becoming a globally highly-demanded Medical AI Engineer.</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="section" id="core-activities" style="background-color: #fcfcfc;">
+        <h2 class="section-title th reveal">กิจกรรมในชมรม</h2>
+        <h2 class="section-title en reveal">Club Activities</h2>
+        <p class="section-subtitle th reveal">คลิกเพื่อดูรายละเอียดเพิ่มเติม</p>
+        <p class="section-subtitle en reveal">Click to view details</p>
+
+        <div class="grid" style="max-width: 1000px; margin: 0 auto;">
+            <a href="#" class="activity-card reveal delay-1">
+                <div class="activity-icon">📚</div>
+                <h3 class="th" style="font-size: 18px;">การจัดการเรียนการสอนหลักสูตรปรับพื้นฐานสำหรับสมาชิกในชมรม</h3>
+                <h3 class="en">Foundation Courses for Club Members</h3>
+                <p class="th">จัดอบรมและคอร์สเรียนปรับพื้นฐานด้าน AI และการแพทย์ให้กับสมาชิก</p>
+                <p class="en">AI and medical foundation courses and workshops for club members.</p>
+            </a>
+            
+            <a href="#" class="activity-card reveal delay-2">
+                <div class="activity-icon">🤝</div>
+                <h3 class="th">รวมกิจกรรมในชมรม</h3>
+                <h3 class="en">Club Activities</h3>
+                <p class="th">กิจกรรมศึกษาดูงานโรงพยาบาล ฟังบรรยายพิเศษ และสานสัมพันธ์ระหว่างสมาชิก</p>
+                <p class="en">Hospital visits, special guest lectures, and networking events.</p>
+            </a>
+            
+            <a href="#" class="activity-card reveal delay-3">
+                <div class="activity-icon">🏆</div>
+                <h3 class="th">การประกวดในชมรม</h3>
+                <h3 class="en">Competitions & Contests</h3>
+                <p class="th">รวมทีมสร้างสรรค์นวัตกรรมและส่งผลงานเข้าร่วมการแข่งขันในเวทีต่างๆ</p>
+                <p class="en">Team up to create innovations and participate in various competitions.</p>
+            </a>
+        </div>
+    </section>
+
+    <section class="section" id="calendar">
+        <h2 class="section-title th reveal">ปฏิทินกิจกรรม ปีการศึกษา 2025-2026</h2>
+        <h2 class="section-title en reveal">Event Calendar 2025-2026</h2>
+        <div class="calendar-container">
+            <div class="event-item reveal delay-1"><div class="event-date"><span class="event-day">20</span><span class="event-month th">ก.ค.</span><span class="event-month en">Jul</span></div><div class="event-details"><h3 class="th">โครงการปรับพื้นฐาน Python และ ML</h3><h3 class="en">Foundation Course: Python & ML</h3><p>🕒 13:00 - 16:00 น. | 📍 ห้อง 4-301</p></div></div>
+            <div class="event-item reveal delay-2"><div class="event-date"><span class="event-day">24</span><span class="event-month th">ส.ค.</span><span class="event-month en">Aug</span></div><div class="event-details"><h3 class="th">ปฐมนิเทศชมรม AI</h3><h3 class="en">AI Club Orientation</h3><p>🕒 09:00 - 12:00 น. | 📍 ห้อง 4-301</p></div></div>
+            <div class="event-item reveal delay-3"><div class="event-date" style="min-width: 90px;"><span class="event-day" style="font-size: 22px;">6-9</span><span class="event-month th">พ.ย.</span><span class="event-month en">Nov</span></div><div class="event-details"><h3 class="th">Open House RSU 2025</h3><h3 class="en">RSU Open House 2025</h3><p>📍 บูธชมรม AI Medical RSU</p></div></div>
+            <div class="event-item reveal delay-1"><div class="event-date"><span class="event-day">24</span><span class="event-month th">ม.ค.</span><span class="event-month en">Jan</span></div><div class="event-details"><h3 class="th">Happy New Year 2026</h3><h3 class="en">Happy New Year 2026</h3><p>🕒 12:00 - 15:00 น. | 📍 ห้องชมรม AI</p></div></div>
+            <div class="event-item reveal delay-2"><div class="event-date"><span class="event-day">22</span><span class="event-month th">ก.พ.</span><span class="event-month en">Feb</span></div><div class="event-details"><h3 class="th">อบรมสัมมนา ครั้งที่ 1</h3><h3 class="en">Seminar #1</h3><p>🕒 09:00 - 12:00 น. | 📍 ห้อง 4-618</p></div></div>
+            <div class="event-item reveal delay-3"><div class="event-date"><span class="event-day">28</span><span class="event-month th">มี.ค.</span><span class="event-month en">Mar</span></div><div class="event-details"><h3 class="th">อบรมสัมมนาออนไลน์</h3><h3 class="en">Online Seminar</h3><p>🕒 14:00 - 16:00 น. | 📍 Online</p></div></div>
+            <div class="event-item reveal delay-4"><div class="event-date"><span class="event-day">29</span><span class="event-month th">มี.ค.</span><span class="event-month en">Mar</span></div><div class="event-details"><h3 class="th">นำเสนอ Program Python Innovator Challenge</h3><h3 class="en">Python Innovator Challenge Pitching</h3><p>🕒 13:00 น. เป็นต้นไป | 📍 ห้อง 4-301</p></div></div>
+        </div>
+    </section>
+
+    <section class="section" id="team" style="background-color: #fcfcfc;">
+        <h2 class="section-title reveal">Board of Directors</h2>
+        
+        <div class="grid reveal delay-1" style="max-width: 350px; margin: 0 auto 30px;">
+            <div class="card" onclick="openModal('S__4653063.jpg', 'ดร. ธเนศ อังศุวัฒนากุล', 'Dr. Thanet Angsuwatanakul', 'Advisor', 'อาจารย์ที่ปรึกษาชมรม AI-Med', 'AI-Med Club Advisor', 'อาจารย์ประจำคณะวิศวกรรมชีวการแพทย์<br>วิทยาลัยวิศวกรรมชีวการแพทย์ มหาวิทยาลัยรังสิต', 'Lecturer, College of Biomedical Engineering<br>Rangsit University')">
+                <div class="profile-box"><img src="S__4653063.jpg" alt="Dr. Thanet"></div>
+                <span class="role" style="color: #b8860b;">Advisor</span>
+                <div class="name th">ดร. ธเนศ อังศุวัฒนากุล</div><div class="name en">Dr. Thanet Angsuwatanakul</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card reveal delay-1" onclick="openModal('S__4653062.jpg', 'ฟาติน สะมะแอ (พี่ฟาติน)', 'Fatin Sama-ae (P\' Fatin)', 'President', 'ประธานชมรม AI-Med', 'President of AI-Med Club', 'นักศึกษาคณะวิศวกรรมชีวการแพทย์ ชั้นปีที่ 2', '2nd Year Student, College of Biomedical Engineering')">
+                <div class="profile-box"><img src="S__4653062.jpg" alt="Fatin"></div>
+                <span class="role" style="color: #ff69b4;">President</span>
+                <div class="name th">ฟาติน สะมะแอ<br>(พี่ฟาติน)</div><div class="name en">Fatin Sama-ae<br>(P' Fatin)</div>
+            </div>
+
+            <div class="card reveal delay-2" onclick="openModal('S__4653064.jpg', 'อรชพร เตชะสินธิ์ (พี่โปรแกรม)', 'Orachaporn Tejasin (P\' Program)', 'Vice President', 'รองประธานชมรม AI-Med', 'Vice President of AI-Med Club', 'นักศึกษาคณะวิศวกรรมชีวการแพทย์ ชั้นปีที่ 2', '2nd Year Student, College of Biomedical Engineering')">
+                <div class="profile-box"><img src="S__4653064.jpg" alt="Program"></div>
+                <span class="role">Vice President</span>
+                <div class="name th">อรชพร เตชะสินธิ์<br>(พี่โปรแกรม)</div><div class="name en">Orachaporn Tejasin<br>(P' Program)</div>
+            </div>
+
+            <div class="card reveal delay-3" onclick="openModal('พี่อาร์ม.jpg', 'สิรภัทร ได้เจริญสุข (พี่อาร์ม)', 'Siraphat Daijaroensuk (P\' Arm)', 'Secretary', 'เลขานุการชมรม AI-Med', 'Secretary of AI-Med Club', 'นักศึกษาคณะวิศวกรรมชีวการแพทย์ ชั้นปีที่ 2', '2nd Year Student, College of Biomedical Engineering')">
+                <div class="profile-box"><img src="พี่อาร์ม.jpg" alt="Siraphat" onerror="this.src='https://via.placeholder.com/150/f0f7ff/0071e3?text=Photo'"></div>
+                <span class="role">Secretary</span>
+                <div class="name th">สิรภัทร ได้เจริญสุข<br>(พี่อาร์ม)</div><div class="name en">Siraphat Daijaroensuk<br>(P' Arm)</div>
+            </div>
+
+            <div class="card reveal delay-4" onclick="openModal('พี่ดีนา.jpg', 'ธนัญญา วิณิกกิตติคุณ (พี่ดีนา)', 'Thananya Winikittikhun (P\' Dina)', 'Secretary', 'เลขานุการชมรม AI-Med', 'Secretary of AI-Med Club', 'นักศึกษาคณะวิศวกรรมชีวการแพทย์ ชั้นปีที่ 2', '2nd Year Student, College of Biomedical Engineering')">
+                <div class="profile-box"><img src="พี่ดีนา.jpg" alt="Dina" onerror="this.src='https://via.placeholder.com/150/f0f7ff/0071e3?text=Photo'"></div>
+                <span class="role">Secretary</span>
+                <div class="name th">ธนัญญา วิณิกกิตติคุณ<br>(พี่ดีนา)</div><div class="name en">Thananya Winikittikhun<br>(P' Dina)</div>
+            </div>
+
+            <div class="card reveal delay-1" onclick="openModal('พี่ใบตาล.jpg', 'วิญาดา เจริญสัตย์ (พี่ใบตาล)', 'Wiyada Jaroensat (P\' Baital)', 'Treasurer', 'เหรัญญิกชมรม AI-Med', 'Treasurer of AI-Med Club', 'นักศึกษาคณะวิศวกรรมชีวการแพทย์ ชั้นปีที่ 2', '2nd Year Student, College of Biomedical Engineering')">
+                <div class="profile-box"><img src="พี่ใบตาล.jpg" alt="Baital" onerror="this.src='https://via.placeholder.com/150/f0f7ff/0071e3?text=Photo'"></div>
+                <span class="role">Treasurer</span>
+                <div class="name th">วิญาดา เจริญสัตย์<br>(พี่ใบตาล)</div><div class="name en">Wiyada Jaroensat<br>(P' Baital)</div>
+            </div>
+
+            <div class="card reveal delay-2" onclick="openModal('mean.jpg', 'ปฐพี สิริเบญจพลสกุล (พี่มีน)', 'Pathapee Siribenchaphonsakul (P\' Mean)', 'Academic Affairs', 'กรรมการฝ่ายวิชาการชมรม AI-Med', 'Academic Affairs Committee', 'นักศึกษาคณะวิศวกรรมชีวการแพทย์ ชั้นปีที่ 3', '3rd Year Student, College of Biomedical Engineering')">
+                <div class="profile-box"><img src="mean.jpg" alt="Mean" onerror="this.src='https://via.placeholder.com/150/f0f7ff/0071e3?text=Photo'"></div>
+                <span class="role">Academic Affairs</span>
+                <div class="name th">ปฐพี สิริเบญจพลสกุล<br>(พี่มีน)</div><div class="name en">Pathapee<br>Siribenchaphonsakul</div>
+            </div>
+
+            <div class="card reveal delay-3" onclick="openModal('พี่กาตูน.jpg', 'พิมพิกา ชากลาง (พี่การ์ตูน)', 'Pimpika Chaklang (P\' Cartoon)', 'Operations', 'กรรมการฝ่ายจัดการชมรม AI-Med', 'Operations Committee', 'นักศึกษาคณะวิศวกรรมชีวการแพทย์ ชั้นปีที่ 2', '2nd Year Student, College of Biomedical Engineering')">
+                <div class="profile-box"><img src="พี่กาตูน.jpg" alt="Pimpika" onerror="this.src='https://via.placeholder.com/150/f0f7ff/0071e3?text=Photo'"></div>
+                <span class="role">Operations</span>
+                <div class="name th">พิมพิกา ชากลาง<br>(พี่การ์ตูน)</div><div class="name en">Pimpika Chaklang<br>(P' Cartoon)</div>
+            </div>
+
+            <div class="card reveal delay-4" onclick="openModal('พี่ตอง.jpg', 'ปวีนัสนันท์ เพชรสงค์ (พี่ตอง)', 'Paweenassanun Phetsong (P\' Tong)', 'Head of Documentation', 'ฝ่ายเอกสารชมรม AI-Med', 'Head of Documentation', 'นักศึกษาคณะวิศวกรรมชีวการแพทย์ ชั้นปีที่ 2', '2nd Year Student, College of Biomedical Engineering')">
+                <div class="profile-box"><img src="พี่ตอง.jpg" alt="Tong" onerror="this.src='https://via.placeholder.com/150/f0f7ff/0071e3?text=Photo'"></div>
+                <span class="role">Documentation</span>
+                <div class="name th">ปวีนัสนันท์ เพชรสงค์<br>(พี่ตอง)</div><div class="name en">Paweenassanun Phetsong<br>(P' Tong)</div>
+            </div>
+
+            <div class="card reveal delay-1" onclick="openModal('พี่พีท.jpg', 'พิพัฒนพงษ์ ศรพรม (พี่พีท)', 'Phiphatphong Sornprom (P\' Pete)', 'Head of Facilities', 'ฝ่ายสถานที่ชมรม AI-Med', 'Head of Facilities', 'นักศึกษาคณะวิศวกรรมชีวการแพทย์ ชั้นปีที่ 2', '2nd Year Student, College of Biomedical Engineering')">
+                <div class="profile-box"><img src="พี่พีท.jpg" alt="Pete" onerror="this.src='https://via.placeholder.com/150/f0f7ff/0071e3?text=Photo'"></div>
+                <span class="role">Facilities</span>
+                <div class="name th">พิพัฒนพงษ์ ศรพรม<br>(พี่พีท)</div><div class="name en">Phiphatphong Sornprom<br>(P' Pete)</div>
+            </div>
+
+            <div class="card reveal delay-2" onclick="openModal('พี่เกล.jpg', 'ปณัฐชญา วงษ์แฉ่ง (พี่เกล)', 'Panatchaya Wongchaeng (P\' Gale)', 'Head of PR', 'ฝ่ายประชาสัมพันธ์ชมรม AI-Med', 'Head of Public Relations', 'นักศึกษาคณะวิศวกรรมชีวการแพทย์ ชั้นปีที่ 2', '2nd Year Student, College of Biomedical Engineering')">
+                <div class="profile-box"><img src="พี่เกล.jpg" alt="Gale" onerror="this.src='https://via.placeholder.com/150/f0f7ff/0071e3?text=Photo'"></div>
+                <span class="role">Public Relations</span>
+                <div class="name th">ปณัฐชญา วงษ์แฉ่ง<br>(พี่เกล)</div><div class="name en">Panatchaya Wongchaeng<br>(P' Gale)</div>
+            </div>
+
+            <div class="card reveal delay-3" onclick="openModal('S__4653066.jpg', 'พี่เฟิร์ส', 'P\' First', 'Faculty Star', 'ดาวคณะวิศวกรรมชีวการแพทย์', 'Faculty Star', 'นักศึกษาคณะวิศวกรรมชีวการแพทย์ ชั้นปีที่ 2', '2nd Year Student, College of Biomedical Engineering')">
+                <div class="profile-box"><img src="S__4653066.jpg" alt="First"></div>
+                <span class="role" style="color: #ff8c00;">Faculty Star</span>
+                <div class="name th">พี่เฟิร์ส</div><div class="name en">P' First</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="gallery">
+        <h2 class="section-title th reveal">ผลงานและภาพบรรยากาศ</h2>
+        <h2 class="section-title en reveal">Gallery & Projects</h2>
+        <p class="section-subtitle reveal">Follow our projects on <span style="color: #dc2743; font-weight: bold;">@ai_medical_rsu</span></p>
+        
+        <div class="gallery-grid">
+            <a href="https://www.instagram.com/ai_medical_rsu" target="_blank" class="ig-post reveal delay-1"><div class="ig-img">รูปผลงาน 1</div></a>
+            <a href="https://www.instagram.com/ai_medical_rsu" target="_blank" class="ig-post reveal delay-2"><div class="ig-img">รูปผลงาน 2</div></a>
+            <a href="https://www.instagram.com/ai_medical_rsu" target="_blank" class="ig-post reveal delay-3"><div class="ig-img">รูปผลงาน 3</div></a>
+        </div>
+        <a href="https://www.instagram.com/ai_medical_rsu" class="ig-btn reveal" target="_blank">View more on Instagram</a>
+    </section>
+
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <img id="modalImg" class="modal-img" src="">
+            <div id="modalRole" class="role">Role</div>
+            <h3 id="modalNameTh" class="th" style="font-size: 24px;">ชื่อไทย</h3>
+            <h3 id="modalNameEn" class="en" style="font-size: 24px;">English Name</h3>
+            
+            <div class="modal-desc-box">
+                <span id="modalPosTh" class="modal-pos th">ตำแหน่งไทย</span>
+                <span id="modalPosEn" class="modal-pos en">Position Eng</span>
+                
+                <span id="modalEduTh" class="modal-edu th">การศึกษาไทย</span>
+                <span id="modalEduEn" class="modal-edu en">Education Eng</span>
+                
+                <span class="modal-contact th"><b>ข้อมูลการติดต่อ:</b> -</span>
+                <span class="modal-contact en"><b>Contact:</b> -</span>
+            </div>
+        </div>
+    </div>
+
+    <footer><p>&copy; 2026 AI-Med Club RSU. All rights reserved.</p></footer>
+
+    <script>
+        let currentLang = 'th';
+        function toggleLanguage() {
+            let body = document.body;
+            let btn = document.getElementById('langToggleBtn');
+            if (currentLang === 'th') { body.classList.remove('th-active'); body.classList.add('en-active'); btn.innerText = 'TH'; currentLang = 'en'; }
+            else { body.classList.remove('en-active'); body.classList.add('th-active'); btn.innerText = 'EN'; currentLang = 'th'; }
+        }
+
+        function openModal(imgSrc, nameTh, nameEn, role, posTh, posEn, eduTh, eduEn) {
+            document.getElementById('modalImg').src = imgSrc; 
+            document.getElementById('modalImg').onerror = function() {
+                this.src = 'https://via.placeholder.com/150/f0f7ff/0071e3?text=Photo';
+            };
+            document.getElementById('modalNameTh').innerHTML = nameTh; 
+            document.getElementById('modalNameEn').innerHTML = nameEn;
+            document.getElementById('modalRole').innerText = role; 
+            document.getElementById('modalPosTh').innerHTML = posTh; 
+            document.getElementById('modalPosEn').innerHTML = posEn; 
+            document.getElementById('modalEduTh').innerHTML = eduTh; 
+            document.getElementById('modalEduEn').innerHTML = eduEn; 
+            
+            let roleEl = document.getElementById('modalRole');
+            if(role === 'Advisor') roleEl.style.color = '#b8860b'; 
+            else if(role === 'President') roleEl.style.color = '#ff69b4'; 
+            else if(role === 'Faculty Star') roleEl.style.color = '#ff8c00';
+            else roleEl.style.color = '#0071e3';
+            
+            document.getElementById('profileModal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('profileModal').style.display = 'none'; }
+        window.onclick = function(event) { let modal = document.getElementById('profileModal'); if (event.target == modal) modal.style.display = "none"; }
+
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight; 
+                var elementTop = reveals[i].getBoundingClientRect().top; 
+                var elementVisible = 100;
+                if (elementTop < windowHeight - elementVisible) reveals[i].classList.add("active");
+            }
+        }
+        window.addEventListener("scroll", reveal); reveal();
+    </script>
+</body>
+</html>
+"""
+
+# Route สร้างหน้าเว็บ
+@app.route('/')
+def home():
+    # ส่งโค้ด HTML ออกไปแสดงผล
+    return render_template_string(html_code)
+
+if __name__ == '__main__':
+    # รันเซิร์ฟเวอร์ โดย debug=True เพื่อให้โค้ดอัปเดตอัตโนมัติเมื่อมีการแก้ไข
+    app.run(debug=True, port=5000)
